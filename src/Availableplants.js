@@ -1,0 +1,118 @@
+import React, { useState, useEffect } from "react";
+import './App.css';
+import { Link, useNavigate, generatePath, useParams } from 'react-router-dom';
+import Axios from 'axios';
+
+
+function Availableplants() {
+  const y = "Active"
+  const [batchlist, setbatchlist] = useState([])
+  useEffect(() =>{
+    Axios.get(`http://localhost:3001/harvestvariationslist/${y}`).then((response) => {
+      setbatchlist(response.data);
+    })
+  }, [y])
+  var id = 0
+  function rowSelect(event) {
+    id = event;
+    console.log(id)
+  }
+  const handleProceedPrice = (e) => {
+    if (id == 0){
+      alert("Select a row to edit.")
+    }
+    else {
+      id && navigate(generatePath("/availableplantseditprice/:id", { id }));
+    }
+  };
+  const navigate = useNavigate();
+  const status = "Wasted"
+  const handleProceed = (e) => {
+    if (id == 0){
+      alert("Select a row to mark as wasted.")
+    }
+    else {
+        Axios.put("http://localhost:3001/availablewastedplantsupdate", {status: status, quantity_id: id});
+        alert("Plant Status Updated")
+        navigate('/availableplants', { replace: true });
+        window.location.reload();
+    }
+  };
+  const handleChange = (e) => {
+    navigate('/availableplantswasted', { replace: true });
+  }
+  const formatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'PHP',
+  });
+  const handleProceedHome = (e) => {
+    navigate(generatePath("/home"));
+    window.location.reload();
+  };
+  const [searchinput, setsearchinput] = useState("");
+  return (
+    <div className='App'>
+        <div class="headform">
+        <h1 class="titleheadform">Available Plants for Sale</h1>
+        <main class="container-fluid">
+<button type="button" class="btn btn-outline-dark backbutton" onClick={handleProceedHome}>Back</button>
+      <button type="button" class="btn btn-outline-danger secondarybutton" onClick={handleProceed}>Mark as Wasted</button>
+      <button type="button" class="btn btn-outline-info secondarybutton" onClick={handleChange}>View Wasted Plants</button>
+      <button type="button" class="btn btn-outline-info secondarybutton" onClick={handleProceedPrice}>Edit Price</button>
+      <form class="d-flex">
+            <input class="form-control me-sm-2" type="text" placeholder="Search ID, Name, or Quality" onChange={(e) =>{setsearchinput(e.target.value)}}/>
+          </form>
+            <div class="tablediv">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                      <th scope="col">Quantity ID</th>
+                      <th scope="col">Harvest ID</th>
+                      <th scope="col">Plant</th>
+                      <th scope="col">Grade</th>
+                      <th scope="col">Quantity Harvested</th>
+                      <th scope="col">Units</th>
+                      <th scope="col">Price per Unit</th>
+                      <th scope="col">Active</th>
+                    </tr>
+                  </thead>
+                      <tbody>
+                        {batchlist.filter((val)=>{
+                        if(searchinput == ""){
+                          return val
+                        }
+                        else if(val.plant_name.toLowerCase().includes(searchinput.toLowerCase())){
+                          return val
+                        }
+                        else if(val.harvest_id == searchinput){
+                          return val
+                        }
+                        else if(val.quantity_id == searchinput){
+                          return val
+                        }
+                        else if(val.grade.toLowerCase().includes(searchinput.toLowerCase())){
+                          return val
+                        }
+                      }).map((val)=> {
+                          return(
+                            <tr class="table-primary tractive" onClick={rowSelect.bind(this, val.quantity_id)}>
+                            <td scope="row">{val.quantity_id}</td>
+                            <td scope="row">{val.harvest_id}</td>
+                            <td scope="row">{val.plant_name}</td>
+                            <td scope="row">{val.grade}</td>
+                            <td scope="row">{val.quantity_harvested}</td>
+                            <td scope="row">{val.units}</td>
+                            <td scope="row">{formatter.format(val.price_per_unit)}</td>
+                            <td scope="row">{val.var_status}</td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+            </table>
+            </div>
+        </main>
+      </div>
+      </div>
+  );
+}
+export default Availableplants;
